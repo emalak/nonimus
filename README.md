@@ -16,10 +16,9 @@ pool.AddTask(func() {
 Fetch some data
 
 ```
-func (shard *Shard) AsyncGetString(key Key, column string) *nonimus.Promise[string] {
+func fetchString(key string) *nonimus.Promise[string] {
 	return nonimus.AddPromise(pool, func(resolve func(GetResult[string]), reject func(error)) {
-		var result string
-		err, found := shard.Get(Keys{key}, SelectColumns{{column, &result}})
+		result, err := fetch(key)
 		if err != nil {
 			reject(err)
 			return
