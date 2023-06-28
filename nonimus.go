@@ -1,0 +1,5 @@
+package nonimus
+
+func init() {
+
+}
