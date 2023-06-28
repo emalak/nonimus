@@ -16,16 +16,19 @@ pool.AddTask(func() {
 Fetch some data
 
 ```
-func fetchString(key string) *nonimus.Promise[string] {
-	return nonimus.AddPromise(pool, func(resolve func(GetResult[string]), reject func(error)) {
-		result, err := fetch(key)
+promise := NewPromise[string](func(resolve func(string), reject func(error)) {
+		result, err := doSomething()
 		if err != nil {
 			reject(err)
 			return
 		}
 		resolve(result)
+	}).Then(func(result string) {
+		// do something
+	}).Catch(func(err error) {
+		// do something
 	})
-}
+result, err := promise.Await()
 ```
 
 ## Fabric
