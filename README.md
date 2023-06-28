@@ -31,6 +31,9 @@ promise := NewPromise[string](func(resolve func(string), reject func(error)) {
 result, err := promise.Await()
 ```
 
+Add promise to pool:
+AddPromise\[T any](pool *Pool, executor func(resolve func(T), reject func(error))) *Promise\[T]
+
 ## Fabric
 Allows you to make a background process what will make come computations with a result
 
