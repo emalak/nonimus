@@ -39,7 +39,7 @@ result, err := promise.Await()
 Add promise to pool:
 AddPromise\[T any](pool *Pool, executor func(resolve func(T), reject func(error))) *Promise\[T]
 
-## ParallelProcessArrau
+## ParallelProcessArray
 
 ```
 inputArray := []int{1, 2, 3, 4, 5}
@@ -61,7 +61,6 @@ Allows you to make a background process what will make come computations with a 
 
 NewFabric\[T any](concurrency int, cacheSize int, scheme func() T) *Fabric\[T] {
 
-TODO add error handling
 ```
 helloWorldFabric := NewFabric[string](10, 1000, func() string {
 		return "hello world!"
