@@ -39,7 +39,7 @@ result, err := promise.Await()
 Add promise to pool:
 AddPromise\[T any](pool *Pool, executor func(resolve func(T), reject func(error))) *Promise\[T]
 
-## ParallelProcessArrau
+## ParallelProcessArray
 
 ```
 inputArray := []int{1, 2, 3, 4, 5}
