@@ -7,7 +7,7 @@ func init() {
 		Concurrency:       128,
 		CollectorSize:     32000,
 		GoroutineStrategy: PreStartGoroutines,
-		ChannelStrategy:   NativeChannel,
+		ChannelStrategy:   NativeChannelStrategy,
 	}) // TODO config
 }
 
