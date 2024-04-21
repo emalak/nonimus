@@ -5,10 +5,6 @@ import (
 	"errors"
 )
 
-type Parallex[MaterialType, ResultType any] struct { // TODO
-	result chan ResultType
-}
-
 type ResultAndErrorStruct[R any] struct {
 	Result R
 	Error  error
