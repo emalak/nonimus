@@ -6,9 +6,14 @@ Library for better concurrency experience in Go
 Goroutine pool
 
 ```
-pool := nonimus.NewPool(10) // 10 threads
+pool := nonimus.NewPool(PoolSettings{
+		Concurrency:       10, // 10 threads
+		CollectorSize:     100, // size of buffered channel that distibutes tasks
+		GoroutineStrategy: PreStartGoroutines,
+		ChannelStrategy:   NativeChannelStrategy,
+	})
 pool.AddTask(func() {
-		// do something
+	// do something
 })
 ```
 
@@ -34,11 +39,29 @@ result, err := promise.Await()
 Add promise to pool:
 AddPromise\[T any](pool *Pool, executor func(resolve func(T), reject func(error))) *Promise\[T]
 
+## ParallelProcessArrau
+
+```
+inputArray := []int{1, 2, 3, 4, 5}
+outputArray := nonimus.ParallelProcessArray(nonimus.DefaultPool(), context.Background(), inputArray, func(a int, ctx context.Context) (int, error) {
+	return a * 10
+}, 2) // 2 = level of concurrency
+fmt.Println(outputArray)
+-> [40, 30, 20, 10, 50] (order can be any)
+
+outputArray2 := nonimus.ParallelProcessArraySaveOrder(nonimus.DefaultPool(), context.Background(), inputArray, func(a int, ctx context.Context) (int, error) {
+	return a * 10
+}, 2)
+fmt.Println(outputArray2)
+-> [10, 20, 30, 40, 50] (order is guaranteed to be saved)
+```
+
 ## Fabric
 Allows you to make a background process what will make come computations with a result
 
 NewFabric\[T any](concurrency int, cacheSize int, scheme func() T) *Fabric\[T] {
 
+TODO add error handling
 ```
 helloWorldFabric := NewFabric[string](10, 1000, func() string {
 		return "hello world!"
@@ -46,5 +69,7 @@ helloWorldFabric := NewFabric[string](10, 1000, func() string {
 helloWorld1 := helloWorldFabric.Take()
 helloWorld2 := helloWorldFabric.Take()
 println(helloWorld2)
+-> "hello world!"
 println(helloWorld1)
+-> "hello world!"
 ```
