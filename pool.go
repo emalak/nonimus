@@ -1,49 +1,96 @@
 package nonimus
 
 import (
+	"github.com/alphadose/zenq/v2"
 	"sync"
 )
 
+type Task func()
+
 type Pool struct {
-	Tasks   []*Task
 	Workers []*Worker
 
-	concurrency   int
-	collector     chan *Task
+	settings      PoolSettings
 	runBackground chan bool
 	wg            sync.WaitGroup
+
+	// Channel
+	collector chan Task
+	zenq      *zenq.ZenQ[Task] // TODO for LowestLatencyChannel
 }
 
-func NewPool(concurrency int) *Pool {
-	pool := &Pool{
-		concurrency: concurrency,
-		collector:   make(chan *Task, concurrency*256),
+type PoolGoroutineStrategy int
+
+const (
+	PreStartGoroutines PoolGoroutineStrategy = iota
+)
+
+type PoolChannelStrategy int
+
+const (
+	NativeChannelStrategy PoolChannelStrategy = iota
+
+	// LowestLatencyChannel is not implemented yet
+	LowestLatencyChannelStrategy
+)
+
+type PoolSettings struct {
+	Concurrency   int
+	CollectorSize int
+
+	GoroutineStrategy PoolGoroutineStrategy
+	ChannelStrategy   PoolChannelStrategy
+}
+
+func NewPool(settings PoolSettings) *Pool {
+	pool := &Pool{settings: settings}
+	switch pool.settings.ChannelStrategy {
+	case NativeChannelStrategy:
+		{
+			pool.collector = make(chan Task, settings.CollectorSize)
+		}
+	case LowestLatencyChannelStrategy:
+		{
+			pool.zenq = zenq.New[Task](10)
+		}
 	}
 	pool.run()
 	return pool
 }
 func NewPoolCollectorSize(concurrency int, collectorSize int) *Pool {
-	pool := &Pool{
-		concurrency: concurrency,
-		collector:   make(chan *Task, collectorSize),
-	}
-	pool.run()
-	return pool
+	return NewPool(PoolSettings{
+		Concurrency:       concurrency,
+		CollectorSize:     collectorSize,
+		GoroutineStrategy: PreStartGoroutines,
+		ChannelStrategy:   NativeChannelStrategy,
+	})
 }
 
 func (p *Pool) AddTask(f func()) {
-	p.collector <- NewTask(f)
+	switch p.settings.ChannelStrategy {
+	case NativeChannelStrategy:
+		{
+			p.collector <- f
+			return
+		}
+	case LowestLatencyChannelStrategy:
+		{
+			p.zenq.Write(f)
+			return
+		}
+	default:
+		{
+			p.collector <- f
+			return
+		}
+	}
 }
 
 func (p *Pool) run() {
-	for i := 1; i <= p.concurrency; i++ {
+	for i := 1; i <= p.settings.Concurrency; i++ {
 		worker := NewWorker(p.collector, i)
 		p.Workers = append(p.Workers, worker)
 		go worker.StartBackground()
-	}
-
-	for i := range p.Tasks {
-		p.collector <- p.Tasks[i]
 	}
 
 	p.runBackground = make(chan bool)
@@ -58,25 +105,4 @@ func (p *Pool) Stop() {
 		p.Workers[i].Stop()
 	}
 	p.runBackground <- true
-}
-
-func AddPromise[T any](pool *Pool, executor func(resolve func(T), reject func(error))) *Promise[T] {
-	if executor == nil {
-		panic("executor cannot be nil")
-	}
-
-	p := &Promise[T]{
-		pending: true,
-		mutex:   &sync.Mutex{},
-		wg:      &sync.WaitGroup{},
-	}
-
-	p.wg.Add(1)
-
-	pool.AddTask(func() {
-		defer p.handlePanic()
-		executor(p.resolve, p.reject)
-	})
-
-	return p
 }

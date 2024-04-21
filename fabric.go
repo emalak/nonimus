@@ -1,31 +1,30 @@
 package nonimus
 
 type Fabric[T any] struct {
-	Cache       chan T
+	Cache       chan *T
 	Concurrency int
 	CacheSize   int
 }
 
-func (f *Fabric[T]) Take() T {
+func (f *Fabric[T]) Take() *T {
 	return <-f.Cache
 }
 
-func NewFabric[T any](concurrency int, cacheSize int, scheme func() T) *Fabric[T] {
-	cache := make(chan T, cacheSize)
-	generationPool := NewPoolCollectorSize(concurrency, concurrency*16)
+func NewFabric[T any](concurrency int, cacheSize int, machine func() *T) {
+	cache := make(chan *T, cacheSize)
+	generationPool := NewPoolCollectorSize(concurrency, concurrency+1)
 	generationPool.AddTask(func() {
-		addTaskFunc[T](generationPool, cache, scheme)
+		addTaskFunc[T](generationPool, cache, machine)
 	})
-	return &Fabric[T]{Cache: cache, Concurrency: concurrency, CacheSize: cacheSize}
 }
 
-func addTaskFunc[T any](pool *Pool, cache chan T, scheme func() T) {
+func addTaskFunc[T any](pool *Pool, cache chan *T, machine func() *T) {
 	for {
-		if pool.concurrency == 1 {
-			cache <- scheme()
+		if pool.settings.Concurrency == 1 {
+			cache <- machine()
 		} else {
 			pool.AddTask(func() {
-				cache <- scheme()
+				cache <- machine()
 			})
 		}
 	}
