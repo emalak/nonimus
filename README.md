@@ -61,7 +61,6 @@ Allows you to make a background process what will make come computations with a 
 
 NewFabric\[T any](concurrency int, cacheSize int, scheme func() T) *Fabric\[T] {
 
-TODO add error handling
 ```
 helloWorldFabric := NewFabric[string](10, 1000, func() string {
 		return "hello world!"
