@@ -43,14 +43,14 @@ AddPromise\[T any](pool *Pool, executor func(resolve func(T), reject func(error)
 
 ```
 inputArray := []int{1, 2, 3, 4, 5}
-outputArray := nonimus.ParallelProcessArray(nonimus.DefaultPool(), context.Background(), inputArray, func(a int, ctx context.Context) (int, error) {
-	return a * 10
+outputArray := nonimus.ParallelProcessArray(nonimus.DefaultPool(), context.Background(), inputArray, func(a int, ctx context.Context) (string, error) {
+	return strconv.Itoa(a * 10)
 }, 2) // 2 = level of concurrency
 fmt.Println(outputArray)
--> [40, 30, 20, 10, 50] (order can be any)
+-> ["40", "30", "20", "10", "50"] (order can be any)
 
 outputArray2 := nonimus.ParallelProcessArraySaveOrder(nonimus.DefaultPool(), context.Background(), inputArray, func(a int, ctx context.Context) (int, error) {
-	return a * 10
+	return a * 10, nil
 }, 2)
 fmt.Println(outputArray2)
 -> [10, 20, 30, 40, 50] (order is guaranteed to be saved)
