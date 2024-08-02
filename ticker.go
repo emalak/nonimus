@@ -7,7 +7,7 @@ import (
 
 type Ticker struct {
 	Delay     time.Duration
-	Cancelled *atomic.Bool
+	Cancelled atomic.Bool
 }
 
 func (t *Ticker) Cancel() {
@@ -26,14 +26,15 @@ func (t *Ticker) AddFunc(f func()) {
 }
 
 func NewTicker(delay time.Duration) *Ticker {
-	var cancelled = new(atomic.Bool)
-	cancelled.Store(false)
-	return &Ticker{Delay: delay, Cancelled: cancelled}
+	ticker := &Ticker{
+		Delay:     delay,
+		Cancelled: atomic.Bool{},
+	}
+	ticker.Cancelled.Store(false)
+	return ticker
 }
 func NewTickerFunc(delay time.Duration, f func()) *Ticker {
-	var cancelled = new(atomic.Bool)
-	cancelled.Store(false)
-	ticker := &Ticker{Delay: delay, Cancelled: cancelled}
+	ticker := NewTicker(delay)
 	ticker.AddFunc(f)
 	return ticker
 }

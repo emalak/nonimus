@@ -1,6 +1,7 @@
 package nonimus
 
 import (
+	"fmt"
 	"github.com/alphadose/zenq/v2"
 	"sync"
 )
@@ -28,16 +29,17 @@ const (
 type PoolChannelStrategy int
 
 const (
-	NativeChannelStrategy PoolChannelStrategy = iota
+	NativeChannel PoolChannelStrategy = iota
 
 	// LowestLatencyChannel is not implemented yet
-	LowestLatencyChannelStrategy
+	LowestLatencyChannel
 )
 
 type PoolSettings struct {
 	Concurrency   int
 	CollectorSize int
 
+	Name              string
 	GoroutineStrategy PoolGoroutineStrategy
 	ChannelStrategy   PoolChannelStrategy
 }
@@ -45,11 +47,11 @@ type PoolSettings struct {
 func NewPool(settings PoolSettings) *Pool {
 	pool := &Pool{settings: settings}
 	switch pool.settings.ChannelStrategy {
-	case NativeChannelStrategy:
+	case NativeChannel:
 		{
 			pool.collector = make(chan Task, settings.CollectorSize)
 		}
-	case LowestLatencyChannelStrategy:
+	case LowestLatencyChannel:
 		{
 			pool.zenq = zenq.New[Task](10)
 		}
@@ -62,25 +64,37 @@ func NewPoolCollectorSize(concurrency int, collectorSize int) *Pool {
 		Concurrency:       concurrency,
 		CollectorSize:     collectorSize,
 		GoroutineStrategy: PreStartGoroutines,
-		ChannelStrategy:   NativeChannelStrategy,
+		ChannelStrategy:   NativeChannel,
 	})
 }
 
 func (p *Pool) AddTask(f func()) {
 	switch p.settings.ChannelStrategy {
-	case NativeChannelStrategy:
+	case NativeChannel:
 		{
-			p.collector <- f
+			select {
+			case p.collector <- f:
+				return
+			default:
+				p.collector <- f
+				fmt.Println("POOL IS FULL", p.settings.Name, "(", p.settings.Concurrency, p.settings.CollectorSize, ")")
+			}
 			return
 		}
-	case LowestLatencyChannelStrategy:
+	case LowestLatencyChannel:
 		{
 			p.zenq.Write(f)
 			return
 		}
 	default:
 		{
-			p.collector <- f
+			select {
+			case p.collector <- f:
+				return
+			default:
+				p.collector <- f
+				fmt.Println("POOL IS FULL", p.settings.Name, "(", p.settings.Concurrency, p.settings.CollectorSize, ")")
+			}
 			return
 		}
 	}

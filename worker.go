@@ -3,33 +3,29 @@ package nonimus
 type Worker struct {
 	ID       int
 	taskChan chan Task
-	quit     chan bool
 }
 
 func NewWorker(channel chan Task, ID int) *Worker {
 	return &Worker{
 		ID:       ID,
 		taskChan: channel,
-		quit:     make(chan bool),
 	}
 }
 
-func (wr *Worker) StartBackground() {
+func (w *Worker) StartBackground() {
 	for {
 		select {
-		case task := <-wr.taskChan:
+		case task := <-w.taskChan:
 			(func() {
 				defer Recover()
 				task()
 			})()
-		case <-wr.quit:
-			return
+			//case <-w.ctx.Done():
+			//	return
 		}
 	}
 }
 
-func (wr *Worker) Stop() {
-	go func() {
-		wr.quit <- true
-	}()
+func (w *Worker) Stop() {
+	// TODO
 }

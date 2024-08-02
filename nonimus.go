@@ -1,14 +1,22 @@
 package nonimus
 
+import "fmt"
+
 var defaultPool *Pool
 
-func init() {
-	defaultPool = NewPool(PoolSettings{
-		Concurrency:       128,
-		CollectorSize:     32000,
-		GoroutineStrategy: PreStartGoroutines,
-		ChannelStrategy:   NativeChannelStrategy,
-	}) // TODO config
+type Settings struct {
+	DefaultPoolSettings *PoolSettings
+}
+
+func Init(s Settings) {
+	if s.DefaultPoolSettings == nil {
+		s.DefaultPoolSettings = &PoolSettings{
+			Name:          "DEFAULT_POOL",
+			Concurrency:   4,
+			CollectorSize: 16,
+		}
+	}
+	defaultPool = NewPool(*s.DefaultPoolSettings)
 }
 
 func DefaultPool() *Pool {
@@ -16,9 +24,8 @@ func DefaultPool() *Pool {
 }
 
 func Recover(additional ...string) {
-	recover()
-	/*err := recover()
+	err := recover()
 	if realErr, ok := err.(error); ok {
-		TODO add custom logging of panics
-	}*/
+		fmt.Println("PANIC! ", realErr, additional)
+	}
 }
