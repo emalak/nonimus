@@ -46,6 +46,11 @@ func AddPromise[T any](pool *Pool, executor func() (T, error)) *Promise[T] {
 
 	return p
 }
+func AddPromiseFunc[T any, Arg any](pool *Pool, executor func(args Arg) (T, error), args Arg) *Promise[T] {
+	return AddPromise(pool, func() (T, error) {
+		return executor(args)
+	})
+}
 
 func NewPromise[T any](executor func() (T, error)) *Promise[T] {
 	return AddPromise(DefaultPool(), executor)
