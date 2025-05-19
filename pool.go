@@ -2,7 +2,6 @@ package nonimus
 
 import (
 	"fmt"
-	"github.com/alphadose/zenq/v2"
 	"sync"
 )
 
@@ -17,7 +16,6 @@ type Pool struct {
 
 	// Channel
 	collector chan Task
-	zenq      *zenq.ZenQ[Task] // TODO for LowestLatencyChannel
 }
 
 type PoolGoroutineStrategy int
@@ -53,7 +51,7 @@ func NewPool(settings PoolSettings) *Pool {
 		}
 	case LowestLatencyChannel:
 		{
-			pool.zenq = zenq.New[Task](10)
+			// TODO
 		}
 	}
 	pool.run()
@@ -83,7 +81,7 @@ func (p *Pool) AddTask(f func()) {
 		}
 	case LowestLatencyChannel:
 		{
-			p.zenq.Write(f)
+			// TODO
 			return
 		}
 	default:
